@@ -75,16 +75,23 @@ def today_mx():
 
 # ===== Helpers: Selenium/WhatsApp =====
 def build_driver():
+    os.makedirs(PROFILE_DIR, exist_ok=True)
+
     chrome_options = Options()
     chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1280,900")
-
-    os.makedirs(PROFILE_DIR, exist_ok=True)
     chrome_options.add_argument(f"--user-data-dir={PROFILE_DIR}")
     chrome_options.add_argument("--profile-directory=Default")
+
+    # 🚀 User-Agent moderno
+    chrome_options.add_argument(
+        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
 
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=chrome_options)
