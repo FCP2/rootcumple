@@ -153,19 +153,7 @@ def init_all():
         except Exception as e:
             print(f"⚠️ Init error: {e}")
 
-@app.route("/status")
-def status():
-    ensure_init_async()
-    info = {
-        "initialized": _initialized,
-        "driver": driver is not None,
-        "logged_in": ensure_logged_in(wait_seconds=1, drv=driver) if driver else False,
-        "sheet_key": bool(SHEET_KEY),
-        "sheet_name": SHEET_NAME or None,
-        "worksheet": WORKSHEET_NAME if wks else None,
-        "last_init_error": last_init_error,
-    }
-    return jsonify(info)
+
 
 def ensure_init_async():
     """
