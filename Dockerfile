@@ -9,9 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -ms /bin/bash appuser
-USER appuser
-
 WORKDIR /app
 
 COPY --chown=appuser:appuser requirements.txt .
