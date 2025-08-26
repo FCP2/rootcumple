@@ -89,12 +89,14 @@ def build_driver():
     service = Service("/usr/bin/chromedriver")
     return webdriver.Chrome(service=service, options=chrome_options)
 
-def ensure_logged_in():
-    driver.get("https://web.whatsapp.com/")
-    # Espera a que cargue el buscador (si ya está logeado)
-    for _ in range(60):
+def ensure_logged_in(wait_seconds=60, drv=None):
+    _drv = drv or driver
+    if _drv is None:
+        return False
+    _drv.get("https://web.whatsapp.com/")
+    for _ in range(wait_seconds):
         try:
-            driver.find_element(By.XPATH, "//div[@contenteditable='true' and @role='textbox']")
+            _drv.find_element(By.XPATH, "//div[@contenteditable='true' and @role='textbox']")
             return True
         except Exception:
             time.sleep(1)
@@ -130,10 +132,6 @@ _init_lock = threading.Lock()
 _initialized = False
 
 def init_all():
-    """
-    Corre una sola vez (con lock). Prepara Selenium + Sheets.
-    No debe lanzar excepciones que tumben el server: loguea y continúa.
-    """
     global driver, wks, _initialized
     with _init_lock:
         if _initialized:
@@ -141,17 +139,33 @@ def init_all():
         try:
             print("Init: creando WebDriver...")
             d = build_driver()
+            driver = d  # <-- primero asignar
+
             print("Init: verificando login de WhatsApp...")
-            _ = ensure_logged_in()  # puede devolver False si aún falta escanear QR
+            ensure_logged_in(wait_seconds=5, drv=d)
+
             print("Init: conectando a Google Sheets...")
             ws = init_gspread()
-            driver = d
             wks = ws
+
             _initialized = True
-            print("Init OK: Selenium + Sheets listos.")
+            print("✅ Init OK: Selenium + Sheets listos.")
         except Exception as e:
-            # No tumbar el server, solo loguear
-            print("Init error:", e)
+            print(f"⚠️ Init error: {e}")
+
+@app.route("/status")
+def status():
+    ensure_init_async()
+    info = {
+        "initialized": _initialized,
+        "driver": driver is not None,
+        "logged_in": ensure_logged_in(wait_seconds=1, drv=driver) if driver else False,
+        "sheet_key": bool(SHEET_KEY),
+        "sheet_name": SHEET_NAME or None,
+        "worksheet": WORKSHEET_NAME if wks else None,
+        "last_init_error": last_init_error,
+    }
+    return jsonify(info)
 
 def ensure_init_async():
     """
@@ -331,6 +345,6 @@ def ping():
 # Main
 # =========================
 if __name__ == "__main__":
-    # ¡No llames init_all() aquí! Arrancamos rápido y la init corre async.
-    print("Starting Flask on PORT", PORT)
+    print(f"Starting Flask on 0.0.0.0:{PORT}")
+    ensure_init_async()  # <-- dispara init en background
     app.run(host="0.0.0.0", port=PORT)
