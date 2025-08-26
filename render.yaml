@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: whatsapp-bot
+    env: docker
+    plan: starter
+    autoDeploy: true
+    disk:
+      name: wa-session
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      # PERFIL PERSISTENTE PARA WHATSAPP
+      - key: WA_PROFILE_DIR
+        value: /data/whatsapp
+      - key: TZ
+        value: America/Mexico_City
+
+      # ======= GOOGLE SHEETS =======
+      # INDISPENSABLE: pega el JSON COMPLETO de tu cuenta de servicio (como secreto)
+      - key: GCP_CREDENTIALS_JSON
+        sync: false
+
+      # Identificador de tu hoja: usa UNO de estos dos (recomiendo SHEET_KEY)
+      # https://docs.google.com/spreadsheets/d/<SHEET_KEY>/edit#gid=0
+      - key: SHEET_KEY
+        value: "10jnzgMiG-kisw-CFWwZhKOCnkO0TjPXtif23D3-GNz0"      # <-- pega aquí (o usa SHEET_NAME)
+      - key: SHEET_NAME
+        value: ""      # <-- alternativa si prefieres por nombre
+
+      # Nombre de la pestaña (worksheet)
+      - key: WORKSHEET_NAME
+        value: "Sheet1"
+
+      # A qué números enviar (coma-separados, en formato 52XXXXXXXXXX)
+      - key: DEST_NUMBERS
+        value: "5217292251844"
+
+      # En qué condición mandar (hoy o hasta hoy)
+      - key: SEND_MODE
+        value: "today"  # "today" o "until_today"
