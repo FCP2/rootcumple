@@ -227,6 +227,30 @@ def qr_png():
     except Exception:
         return send_file(BytesIO(b""), mimetype="image/png")
 
+@app.route("/send_test")
+def send_test():
+    """
+    Envía un mensaje manual a un número específico.
+    Uso: /send_test?to=521XXXXXXXXXX&msg=Hola%20mundo
+    """
+    ensure_init_async()
+    if not driver:
+        return jsonify({"error": "Driver aún no está listo"}), 503
+    if not ensure_logged_in(wait_seconds=2, drv=driver):
+        return jsonify({"error": "Sesión de WhatsApp no iniciada. Escanea el QR en /"}), 409
+
+    num = request.args.get("to")
+    msg = request.args.get("msg", "Prueba desde Render ✅")
+
+    if not num:
+        return jsonify({"error": "Debes indicar el número en formato 52XXXXXXXXXX con ?to="}), 400
+
+    try:
+        send_whatsapp_text(num, msg)
+        return jsonify({"to": num, "msg": msg, "status": "enviado"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/status")
 def status():
     ensure_init_async()
