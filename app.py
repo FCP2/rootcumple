@@ -122,14 +122,13 @@ def send_whatsapp_text(phone: str, text: str):
     return True
 
 # ===== Flask lifecycle =====
-@app.before_first_request
 def init_all():
     global driver, wks
-    # Driver
-    driver = build_driver()
-    ensure_logged_in()
-    # Sheets
-    wks = init_gspread()
+    if not hasattr(init_all, "initialized"):
+        driver = build_driver()
+        ensure_logged_in()
+        wks = init_gspread()
+        init_all.initialized = True  # evita doble inicialización
 
 # ===== Rutas =====
 @app.route("/")
@@ -251,4 +250,5 @@ def ping():
     return "pong"
 
 if __name__ == "__main__":
+    init_all()  # inicializamos manualmente
     app.run(host="0.0.0.0", port=PORT)
